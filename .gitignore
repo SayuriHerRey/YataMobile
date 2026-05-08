@@ -1,0 +1,21 @@
+# ==================== FRONTEND (Expo) ====================
+yataMobile/node_modules/
+yataMobile/android/
+yataMobile/ios/
+yataMobile/.expo/
+yataMobile/google-services.json
+yataMobile/dist/
+yataMobile/web-build/
+
+# ==================== BACKEND (Microservicios) ====================
+microservicios/venv/
+microservicios/__pycache__/
+microservicios/node_modules/
+microservicios/.env
+microservicios/dist/
+microservicios/*.log
+
+# ==================== General ====================
+.DS_Store
+*.log
+.env

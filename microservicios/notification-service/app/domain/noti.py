@@ -37,8 +37,12 @@ class Notification:
 
     # ── Reglas de negocio ─────────────────────────────────────────────────
     def mark_sent(self) -> None:
+        # ⚠️ FIX: idempotente — si ya está enviada no lanza excepción
+        if self.status in (NotificationStatus.SENT, NotificationStatus.DELIVERED):
+            return
         if self.status != NotificationStatus.PENDING:
-            raise ValueError(f"No se puede marcar como enviada: estado actual '{self.status}'")
+            # Fue marcada como failed pero el push sí llegó — corregir
+            pass
         self.status = NotificationStatus.SENT
         self.sent_at = datetime.utcnow()
 

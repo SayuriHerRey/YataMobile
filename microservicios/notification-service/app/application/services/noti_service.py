@@ -69,6 +69,7 @@ class NotiService:
 
     # 1. Enviar notificación (llamado por Order Service)
     async def send_notification(self, dto: SendNotificationDTO) -> NotificationOut:
+        saved = None
         try:
             # Validar y convertir tipo
             try:
@@ -85,44 +86,55 @@ class NotiService:
                 extra_data=dto.data or {},
             )
 
-            # Persistir primero
+            # Persistir primero (siempre queda en BD)
             saved = await self._noti.save(noti)
 
-            # Obtener tokens activos
+            # Obtener tokens activos del usuario
             tokens = await self._tokens.find_by_user(dto.user_id)
             active_tokens = [t for t in tokens if t.is_active]
 
             if not active_tokens:
-                return _to_out(saved)  # Solo guardar en BD
+                # No hay tokens registrados — notificación queda en BD sin push
+                print(f"ℹ️  Usuario {dto.user_id} sin tokens activos. Notificación guardada en BD.")
+                return _to_out(saved)
 
-            # Intentar envío push
+            # Intentar envío push a cada token activo
             any_success = False
             for token in active_tokens:
-                success = await self._push.send(
-                    expo_token=token.expo_token,
-                    title=saved.title,
-                    message=saved.message,
-                    data=saved.extra_data,
-                )
-                if success:
-                    any_success = True
+                try:
+                    success = await self._push.send(
+                        expo_token=token.expo_token,
+                        title=saved.title,
+                        message=saved.message,
+                        data=saved.extra_data,
+                    )
+                    if success:
+                        any_success = True
+                        print(f"✅ Push enviado a {token.expo_token[:20]}...")
+                    else:
+                        # Token inválido o expirado → desactivar
+                        print(f"⚠️  Token inválido, desactivando: {token.expo_token[:20]}...")
+                        await self._tokens.deactivate_token(token.expo_token)
+                except Exception as push_err:
+                    print(f"❌ Error enviando push a {token.expo_token[:20]}...: {push_err}")
+
+            # Actualizar estado en BD según resultado del push
+            # ⚠️ FIX: sólo llamamos mark_sent/mark_failed si sigue en PENDING
+            if saved.status == NotificationStatus.PENDING:
+                if any_success:
+                    saved.mark_sent()
                 else:
-                    # Token inválido → desactivar
-                    await self._tokens.deactivate_token(token.expo_token)
+                    saved.mark_failed()
+                await self._noti.save(saved)
 
-            # Actualizar estado
-            if any_success:
-                saved.mark_sent()
-            else:
-                saved.mark_failed()
-
-            await self._noti.save(saved)
             return _to_out(saved)
 
         except Exception as e:
             print(f"❌ Error en NotiService.send_notification: {e}")
-            # Devolver al menos la notificación guardada
-            return _to_out(saved) if 'saved' in locals() else NotificationOut(
+            if saved is not None:
+                return _to_out(saved)
+            # Caso extremo: ni siquiera se pudo guardar
+            return NotificationOut(
                 id="error",
                 user_id=dto.user_id,
                 type="system",
@@ -132,19 +144,24 @@ class NotiService:
                 is_read=False,
                 created_at="",
                 sent_at=None,
-                extra_data={}
+                extra_data={},
             )
 
-    # 2. Registrar token Expo
+    # 2. Registrar token Expo (llamado desde la app móvil al iniciar sesión)
     async def register_token(self, dto: RegisterTokenDTO) -> None:
         try:
+            if not dto.expo_token.startswith("ExponentPushToken["):
+                print(f"⚠️  Token con formato inválido: {dto.expo_token}")
+                return
             token = DeviceToken(
                 user_id=dto.user_id,
                 expo_token=dto.expo_token,
             )
             await self._tokens.save_token(token)
+            print(f"✅ Token registrado para usuario {dto.user_id}")
         except Exception as e:
             print(f"❌ Error registrando token: {e}")
+            raise
 
     # 3. Bandeja de notificaciones
     async def get_user_notifications(

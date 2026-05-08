@@ -29,7 +29,14 @@ pip install -r requirements.txt
 ```
 
 ### 3. Arrancar cada servicio (en terminales separadas)
-```cd microservicios/nombreServicio
+```cd microservicios/order-service
+    cd microservicios/order-service
+    cd microservicios/notification-service
+    cd microservicios/product-service
+    cd microservicios/payment-service
+    cd microservicios/auth-service
+    cd microservicios/analytics-service
+
 ### Activas el entorno 
  ..\..\venv\Scripts\activate
 

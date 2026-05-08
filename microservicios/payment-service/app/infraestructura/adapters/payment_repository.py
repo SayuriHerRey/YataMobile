@@ -46,7 +46,10 @@ class PostgresPaymentRepository(PaymentRepository):
                 %(gateway_reference)s, %(failure_reason)s
             ) RETURNING *
         """
-        with _get_conn() as conn, conn.cursor() as cur:
+        # ✅ FIX: conexión explícita con try/finally para garantizar cierre
+        conn = _get_conn()
+        try:
+            cur = conn.cursor()
             cur.execute(sql, {
                 "id": payment.id,
                 "order_id": payment.order_id,
@@ -60,28 +63,46 @@ class PostgresPaymentRepository(PaymentRepository):
                 "gateway_reference": payment.gateway_reference,
                 "failure_reason": payment.failure_reason,
             })
-            conn.commit()
-            return _row_to_payment(dict(cur.fetchone()))
+            conn.commit()  # ✅ commit explícito y único
+            row = cur.fetchone()
+            return _row_to_payment(dict(row))
+        except Exception:
+            conn.rollback()  # ✅ rollback explícito si algo falla
+            raise
+        finally:
+            conn.close()  # ✅ siempre cierra la conexión
 
     def find_by_id(self, payment_id: str) -> Optional[Payment]:
-        with _get_conn() as conn, conn.cursor() as cur:
+        conn = _get_conn()
+        try:
+            cur = conn.cursor()
             cur.execute("SELECT * FROM payments WHERE id = %s", (payment_id,))
             row = cur.fetchone()
             return _row_to_payment(dict(row)) if row else None
+        finally:
+            conn.close()
 
     def find_by_order(self, order_id: str) -> Optional[Payment]:
-        with _get_conn() as conn, conn.cursor() as cur:
+        conn = _get_conn()
+        try:
+            cur = conn.cursor()
             cur.execute("SELECT * FROM payments WHERE order_id = %s LIMIT 1", (order_id,))
             row = cur.fetchone()
             return _row_to_payment(dict(row)) if row else None
+        finally:
+            conn.close()
 
     def find_by_user(self, user_id: str) -> List[Payment]:
-        with _get_conn() as conn, conn.cursor() as cur:
+        conn = _get_conn()
+        try:
+            cur = conn.cursor()
             cur.execute(
                 "SELECT * FROM payments WHERE user_id = %s ORDER BY created_at DESC",
                 (user_id,)
             )
             return [_row_to_payment(dict(r)) for r in cur.fetchall()]
+        finally:
+            conn.close()
 
     def update(self, payment: Payment) -> Payment:
         sql = """
@@ -91,12 +112,20 @@ class PostgresPaymentRepository(PaymentRepository):
                 failure_reason = %(failure_reason)s
             WHERE id = %(id)s RETURNING *
         """
-        with _get_conn() as conn, conn.cursor() as cur:
+        conn = _get_conn()
+        try:
+            cur = conn.cursor()
             cur.execute(sql, {
                 "id": payment.id,
                 "status": payment.status.value,
                 "gateway_reference": payment.gateway_reference,
                 "failure_reason": payment.failure_reason,
             })
-            conn.commit()
-            return _row_to_payment(dict(cur.fetchone()))
+            conn.commit()  # ✅ commit explícito y único
+            row = cur.fetchone()
+            return _row_to_payment(dict(row))
+        except Exception:
+            conn.rollback()  # ✅ rollback explícito si algo falla
+            raise
+        finally:
+            conn.close()  # ✅ siempre cierra la conexión
