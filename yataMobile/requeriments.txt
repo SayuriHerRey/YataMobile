@@ -1,0 +1,31 @@
+# YaTa Mobile - Dependencias Frontend
+# Generado: $(date)
+# Comando: npx expo install <paquete>
+
+# Core Expo
+expo@~50.0.0
+expo-linear-gradient@~12.7.0
+expo-screen-orientation@~6.4.0
+expo-status-bar@~1.11.0
+expo-web-browser@~12.8.0
+
+# React & React Native
+react@18.2.0
+react-native@0.73.2
+react-native-screens@~3.29.0
+react-native-safe-area-context@4.8.2
+react-native-gesture-handler@~2.14.0
+react-native-reanimated@~3.6.0
+
+# Navegación
+@react-navigation/native@^6.1.9
+@react-navigation/native-stack@^6.9.17
+@react-navigation/bottom-tabs@^6.5.11
+
+# Iconos y UI
+@expo/vector-icons@^14.0.0
+
+# Utilidades (opcionales para futuro)
+# axios@^1.6.0          # Para llamadas API a backend FastAPI
+# zustand@^4.4.0        # Para estado global (carrito, auth)
+# @tanstack/react-query@^5.0.0  # Para caché de API
