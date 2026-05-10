@@ -33,7 +33,7 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
       setLoading(true);
       setError(null);
 
-      console.log('📡 Cargando productos desde:', 'http://192.168.1.66:8002');
+      console.log('📡 Cargando productos desde:', 'http://18.211.7.125:8002');
       const data = await productService.list();
 
       console.log(`✅ ${data.length} productos cargados correctamente`);
