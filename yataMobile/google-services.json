@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "131929215722",
+    "project_id": "notipush-d84ed",
+    "storage_bucket": "notipush-d84ed.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:131929215722:android:95b0a3476b90bed39bfd93",
+        "android_client_info": {
+          "package_name": "com.say1610.yata"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDZJ2WJrIW9Lhyi5_MKeSF7xfuvkwccEOQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
