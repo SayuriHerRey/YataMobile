@@ -1,12 +1,12 @@
 // src/services/config.ts
 
 export const URLS = {
-    AUTH: 'http://192.168.1.66:8004',
-    ORDER: 'http://192.168.1.66:8000',
-    NOTIFICATION: 'http://192.168.1.66:8001',
-    PRODUCT: 'http://192.168.1.66:8002',
-    PAYMENT: 'http://192.168.1.66:8003',
-    ANALYTICS: 'http://192.168.1.66:8005',
+    AUTH: 'http://18.211.7.125:8004',
+    ORDER: 'http://18.211.7.125:8000',
+    NOTIFICATION: 'http://18.211.7.125:8001',
+    PRODUCT: 'http://18.211.7.125:8002',
+    PAYMENT: 'http://18.211.7.125:8003',
+    ANALYTICS: 'http://18.211.7.125:8005',
 };
 
 // ─── Sesión de usuario ────────────────────────────────────────────────────────
