@@ -1,5 +1,5 @@
 // src/services/authService.ts
-
+import axios from 'axios';
 import { URLS, Session, SessionUser } from './config';
 
 export interface LoginResult {
@@ -10,24 +10,14 @@ export interface LoginResult {
 
 export const authService = {
 
-    /**
-     * Iniciar sesión contra el auth-service real.
-     */
     async login(email: string, password: string): Promise<LoginResult> {
         try {
-            const response = await fetch(`${URLS.AUTH}/api/v1/auth/login`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password }),
-            });
+            const response = await axios.post(`${URLS.AUTH}/api/v1/auth/login`,
+                { email, password },
+                { headers: { 'Content-Type': 'application/json' }, timeout: 10000 }
+            );
 
-            if (!response.ok) {
-                const errData = await response.json().catch(() => ({}));
-                return { success: false, error: errData.detail ?? 'Correo o contraseña incorrectos' };
-            }
-
-            const data = await response.json();
-
+            const data = response.data;
             const user: SessionUser = {
                 user_id: data.user_id,
                 email: data.email,
@@ -39,45 +29,32 @@ export const authService = {
 
             await Session.setUser(user);
             return { success: true, user };
-        } catch (err) {
+        } catch (err: any) {
             console.error('[authService.login]', err);
-            return { success: false, error: 'No se pudo conectar al servidor. Verifica tu red.' };
+            const msg = err?.response?.data?.detail ?? 'No se pudo conectar al servidor.';
+            return { success: false, error: msg };
         }
     },
 
-    /**
-     * Registrar un nuevo usuario.
-     */
     async register(email: string, password: string, name: string): Promise<{ success: boolean; error?: string }> {
         try {
-            const response = await fetch(`${URLS.AUTH}/api/v1/auth/register`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password, name }),
-            });
-            if (!response.ok) {
-                const errData = await response.json().catch(() => ({}));
-                return { success: false, error: errData.detail ?? 'Error al registrar usuario' };
-            }
+            await axios.post(`${URLS.AUTH}/api/v1/auth/register`,
+                { email, password, name },
+                { headers: { 'Content-Type': 'application/json' }, timeout: 10000 }
+            );
             return { success: true };
-        } catch (err) {
-            return { success: false, error: 'No se pudo conectar al servidor.' };
+        } catch (err: any) {
+            const msg = err?.response?.data?.detail ?? 'Error al registrar usuario';
+            return { success: false, error: msg };
         }
     },
 
-    /**
-     * Cerrar sesión.
-     */
     async logout(): Promise<void> {
         const user = await Session.getRawUser();
         if (user?.refresh_token) {
             try {
-                await fetch(`${URLS.AUTH}/api/v1/auth/logout?refresh_token=${user.refresh_token}`, {
-                    method: 'POST',
-                });
-            } catch {
-                /* silencioso */
-            }
+                await axios.post(`${URLS.AUTH}/api/v1/auth/logout?refresh_token=${user.refresh_token}`);
+            } catch { /* silencioso */ }
         }
         await Session.clearSession();
     },
